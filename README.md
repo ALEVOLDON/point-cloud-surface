@@ -2,9 +2,10 @@
 
 Procedural Blender scene that generates a glowing point-cloud blob inspired by the reference image.
 
-![Preview](render/point_cloud_blob.png)
+[![Animated preview](render/preview.gif)](https://alevoldon.github.io/point-cloud-surface/interactive.html)
 
-Live preview: <https://alevoldon.github.io/point-cloud-surface/>
+Live preview: <https://alevoldon.github.io/point-cloud-surface/>  
+Interactive 3D: <https://alevoldon.github.io/point-cloud-surface/interactive.html>
 
 ## What's Included
 
