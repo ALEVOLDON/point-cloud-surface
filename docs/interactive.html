@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Interactive Point Cloud Blob</title>
+    <style>
+      :root {
+        --bg: #050505;
+        --text: #eef4ff;
+        --muted: #9ca9bd;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: var(--bg);
+        font-family: "Segoe UI", sans-serif;
+      }
+      canvas { display: block; }
+      #ui {
+        position: absolute;
+        top: 32px;
+        left: 32px;
+        pointer-events: none;
+        z-index: 10;
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 2rem;
+        color: var(--text);
+        text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+      }
+      .back-btn {
+        pointer-events: auto;
+        display: inline-block;
+        margin-top: 14px;
+        padding: 7px 14px;
+        background: rgba(255,255,255,0.1);
+        color: var(--text);
+        text-decoration: none;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.2);
+        font-size: 0.9rem;
+        transition: background 0.2s;
+      }
+      .back-btn:hover { background: rgba(255,255,255,0.22); }
+    </style>
+  </head>
+  <body>
+    <div id="ui">
+      <h1>Interactive Point Cloud</h1>
+      <p>Drag to rotate &middot; Scroll to zoom</p>
+      <a href="index.html" class="back-btn">&larr; Back to Animation</a>
+    </div>
+
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+      import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+      import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+      // ===== VERTEX SHADER =====
+      // Uses classic hash-based 3D noise which is robust across all GPU drivers
+      const vertexShader = /* glsl */`
+        uniform float uTime;
+        varying float vNormalizedZ;
+        varying float vRandColor;
+
+        // Hash-based 3D value noise (Ian McEwan style, simple + reliable)
+        float hash(float n) { return fract(sin(n) * 43758.5453123); }
+
+        float noise3(vec3 p) {
+          vec3 i = floor(p);
+          vec3 f = fract(p);
+          f = f * f * (3.0 - 2.0 * f); // smoothstep
+
+          float n = i.x + i.y * 57.0 + i.z * 113.0;
+          return mix(
+            mix(mix(hash(n+  0.0), hash(n+  1.0), f.x),
+                mix(hash(n+ 57.0), hash(n+ 58.0), f.x), f.y),
+            mix(mix(hash(n+113.0), hash(n+114.0), f.x),
+                mix(hash(n+170.0), hash(n+171.0), f.x), f.y),
+            f.z
+          );
+        }
+
+        // FBM: layered octaves
+        float fbm(vec3 p) {
+          float v = 0.0;
+          float a = 0.5;
+          for (int i = 0; i < 5; i++) {
+            v += a * noise3(p);
+            p  *= 2.0;
+            a  *= 0.5;
+          }
+          return v;
+        }
+
+        void main() {
+          vec3 pos = position;
+          float t = uTime * 0.35;
+
+          // Two noise layers matching Blender setup
+          float noiseA = fbm(pos * 1.45 + vec3(0.0, 0.0, t * 1.4));
+          float noiseB = fbm(pos * 3.20 + vec3(0.0, 0.0, 3.8 + t * 2.2));
+
+          float combined = noiseA * 0.34 + noiseB * 0.13;
+
+          // Map range: 0..0.52 -> ampMin..ampMax (animated)
+          float angle  = t;
+          float ampMin = -0.16 - 0.02 * sin(angle);
+          float ampMax =  0.29 + 0.035 * cos(angle);
+
+          float disp = ampMin + combined / 0.52 * (ampMax - ampMin);
+          pos += normal * disp;
+
+          // Animated scale (pose_blob)
+          pos.x *= 1.12 + 0.03 * sin(angle);
+          pos.y *= 0.98 + 0.02 * cos(angle * 2.0);
+          pos.z *= 1.06 + 0.025 * cos(angle);
+
+          // Animated rotation Z then X
+          float rotZ = 0.418 + 0.244 * sin(angle);
+          float cosZ = cos(rotZ); float sinZ = sin(rotZ);
+          pos = vec3(
+            cosZ * pos.x - sinZ * pos.y,
+            sinZ * pos.x + cosZ * pos.y,
+            pos.z
+          );
+          float rotX = 0.279 + 0.087 * cos(angle);
+          float cosX = cos(rotX); float sinX = sin(rotX);
+          pos = vec3(
+            pos.x,
+            cosX * pos.y - sinX * pos.z,
+            sinX * pos.y + cosX * pos.z
+          );
+
+          vNormalizedZ = clamp((pos.z + 1.5) / 3.0, 0.0, 1.0);
+          vRandColor   = hash(position.x * 17.3 + position.y * 41.7 + position.z * 93.1);
+
+          vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
+          gl_Position  = projectionMatrix * mvPos;
+          gl_PointSize = 9.0 / -mvPos.z;
+        }
+      `;
+
+      // ===== FRAGMENT SHADER =====
+      const fragmentShader = /* glsl */`
+        varying float vNormalizedZ;
+        varying float vRandColor;
+
+        void main() {
+          // Round point shape
+          vec2 c = gl_PointCoord - 0.5;
+          float dist = length(c);
+          if (dist > 0.5) discard;
+
+          // Soft edge
+          float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
+
+          // Blue-to-magenta gradient (matches Blender color ramp)
+          float t = smoothstep(0.08, 0.92, vNormalizedZ);
+          // + slight per-point color variation (the noise in Blender material)
+          t = clamp(t + (vRandColor - 0.5) * 0.07, 0.0, 1.0);
+
+          vec3 colMagenta = vec3(0.90, 0.40, 1.00);
+          vec3 colBlue    = vec3(0.22, 0.74, 1.00);
+          vec3 color = mix(colMagenta, colBlue, t);
+
+          gl_FragColor = vec4(color * 0.9, alpha * 0.85);
+        }
+      `;
+
+      // ===== SETUP =====
+      const W = window.innerWidth, H = window.innerHeight;
+
+      const renderer = new THREE.WebGLRenderer({ antialias: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(W, H);
+      document.body.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(68, W / H, 0.1, 100);
+      camera.position.set(0, -6.8, 0.7);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 0, 0.06);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.minDistance = 3;
+      controls.maxDistance = 15;
+
+      // Dense sphere, same as Blender source (160 seg, 112 rings)
+      const geometry = new THREE.SphereGeometry(1.15, 160, 112);
+
+      const material = new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms: { uTime: { value: 0 } },
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+
+      scene.add(new THREE.Points(geometry, material));
+
+      // Bloom post-processing
+      const composer = new EffectComposer(renderer);
+      composer.addPass(new RenderPass(scene, camera));
+      const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.6, 0.6, 0.1);
+      composer.addPass(bloom);
+
+      // RESIZE
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // LOOP
+      const clock = new THREE.Clock();
+      (function loop() {
+        requestAnimationFrame(loop);
+        material.uniforms.uTime.value = clock.getElapsedTime();
+        controls.update();
+        composer.render();
+      })();
+    </script>
+  </body>
+</html>

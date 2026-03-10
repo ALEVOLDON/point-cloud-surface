@@ -11,7 +11,8 @@ Live preview: <https://alevoldon.github.io/point-cloud-surface/>
 - `make_point_cloud_blob.py` builds the scene from scratch with `bpy`
 - `point_cloud_blob.blend` is the generated Blender scene
 - `render/point_cloud_blob.png` is the preview render
-- `docs/index.html` is a browser-based animation preview
+- `docs/index.html` is a browser-based animation preview (sampled PNG frames)
+- `docs/interactive.html` is a real-time WebGL preview built with Three.js
 - `FULL_PROCESS_GUIDE.md` explains the full build process
 - `BLENDER_UI_STEP_BY_STEP.md` explains how to recreate it manually in Blender UI
 - `PORTFOLIO_TEXTS.md` contains Russian and English project descriptions

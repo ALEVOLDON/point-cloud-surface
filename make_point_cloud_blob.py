@@ -16,38 +16,40 @@ def parse_args():
         "frames": 96,
         "fps": 24,
     }
-    if "--" not in argv:
-        return defaults
+    import argparse
 
-    user_args = argv[argv.index("--") + 1 :]
-    args = defaults.copy()
+    parser = argparse.ArgumentParser(description="Generate Procedural Point Cloud Blob")
+    parser.add_argument("--blend", dest="blend_path", default=defaults["blend_path"], help="Output path for the .blend file")
+    parser.add_argument("--render", dest="render_path", default=defaults["render_path"], help="Output path for the rendered image")
+    parser.add_argument("--animate", dest="animation_path", default=defaults["animation_path"], help="Output path prefix for animation frames")
+    parser.add_argument("--frames", type=int, default=defaults["frames"], help="Number of frames for the animation")
+    parser.add_argument("--fps", type=int, default=defaults["fps"], help="Frames per second")
+    parser.add_argument("--color1", default="#e666ff", help="Hex color for the bright magenta end of the gradient")
+    parser.add_argument("--color2", default="#38bdff", help="Hex color for the bright blue end of the gradient")
+    parser.add_argument("--noise-scale", type=float, default=1.0, help="Scale multiplier for the procedural noise")
 
-    i = 0
-    while i < len(user_args):
-        arg = user_args[i]
-        if arg == "--blend" and i + 1 < len(user_args):
-            args["blend_path"] = os.path.abspath(user_args[i + 1])
-            i += 2
-            continue
-        if arg == "--render" and i + 1 < len(user_args):
-            args["render_path"] = os.path.abspath(user_args[i + 1])
-            args["render"] = True
-            i += 2
-            continue
-        if arg == "--animate" and i + 1 < len(user_args):
-            args["animation_path"] = os.path.abspath(user_args[i + 1])
-            args["animate"] = True
-            i += 2
-            continue
-        if arg == "--frames" and i + 1 < len(user_args):
-            args["frames"] = int(user_args[i + 1])
-            i += 2
-            continue
-        if arg == "--fps" and i + 1 < len(user_args):
-            args["fps"] = int(user_args[i + 1])
-            i += 2
-            continue
-        i += 1
+    # If the user passed arguments after "--", parse them, otherwise just use defaults
+    if "--" in argv:
+        user_args = argv[argv.index("--") + 1 :]
+        parsed, _ = parser.parse_known_args(user_args)
+        
+        args = {
+            "blend_path": os.path.abspath(parsed.blend_path),
+            "render_path": os.path.abspath(parsed.render_path),
+            "animation_path": os.path.abspath(parsed.animation_path),
+            "render": "--render" in user_args,
+            "animate": "--animate" in user_args,
+            "frames": parsed.frames,
+            "fps": parsed.fps,
+            "color1": parsed.color1,
+            "color2": parsed.color2,
+            "noise_scale": parsed.noise_scale
+        }
+    else:
+        args = defaults.copy()
+        args["color1"] = "#e666ff"
+        args["color2"] = "#38bdff"
+        args["noise_scale"] = 1.0
 
     return args
 
@@ -112,7 +114,13 @@ def create_blob_source():
     return source
 
 
-def build_emission_material():
+def hex_to_rgba(hex_str, alpha=1.0):
+    hex_str = hex_str.lstrip('#')
+    if len(hex_str) == 3:
+        hex_str = ''.join(c + c for c in hex_str)
+    return tuple(int(hex_str[i:i+2], 16) / 255.0 for i in (0, 2, 4)) + (alpha,)
+
+def build_emission_material(color1_hex, color2_hex):
     material = bpy.data.materials.new("PointGlow")
     material.use_nodes = True
     nodes = material.node_tree.nodes
@@ -156,10 +164,13 @@ def build_emission_material():
     add.operation = "ADD"
     add.use_clamp = True
 
+    c1 = hex_to_rgba(color1_hex)
+    c2 = hex_to_rgba(color2_hex)
+    
     ramp.color_ramp.elements[0].position = 0.08
-    ramp.color_ramp.elements[0].color = (0.90, 0.40, 1.0, 1.0)
+    ramp.color_ramp.elements[0].color = c1
     ramp.color_ramp.elements[1].position = 0.92
-    ramp.color_ramp.elements[1].color = (0.22, 0.74, 1.0, 1.0)
+    ramp.color_ramp.elements[1].color = c2
 
     value.outputs[0].default_value = 2.3
 
@@ -177,7 +188,7 @@ def build_emission_material():
     return material
 
 
-def build_geometry_nodes(source, dot, material):
+def build_geometry_nodes(source, dot, material, noise_scale_mult=1.0):
     modifier = source.modifiers.new(name="PointCloudBlob", type="NODES")
     node_group = bpy.data.node_groups.new("PointCloudBlobNodes", "GeometryNodeTree")
     modifier.node_group = node_group
@@ -234,13 +245,13 @@ def build_geometry_nodes(source, dot, material):
     scale_b.inputs[3].default_value = 3.2
 
     noise_a.noise_dimensions = "4D"
-    noise_a.inputs["Scale"].default_value = 1.0
+    noise_a.inputs["Scale"].default_value = 1.0 * noise_scale_mult
     noise_a.inputs["Detail"].default_value = 8.0
     noise_a.inputs["Roughness"].default_value = 0.4
     noise_a.inputs["W"].default_value = 0.0
 
     noise_b.noise_dimensions = "4D"
-    noise_b.inputs["Scale"].default_value = 1.0
+    noise_b.inputs["Scale"].default_value = 1.0 * noise_scale_mult
     noise_b.inputs["Detail"].default_value = 3.0
     noise_b.inputs["Roughness"].default_value = 0.54
     noise_b.inputs["W"].default_value = 3.8
@@ -377,8 +388,8 @@ def main():
 
     dot = create_dot_instance()
     source = create_blob_source()
-    material = build_emission_material()
-    nodes_info = build_geometry_nodes(source, dot, material)
+    material = build_emission_material(args["color1"], args["color2"])
+    nodes_info = build_geometry_nodes(source, dot, material, args["noise_scale"])
     pose_blob(source)
     camera, target = create_camera()
 
