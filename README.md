@@ -1,48 +1,66 @@
 # Point Cloud Blob
 
-Procedural Blender scene that generates a glowing point-cloud blob inspired by the reference image.
+> Procedural glowing point-cloud blob generated entirely with Python (`bpy`) and Blender 5 Geometry Nodes.
 
-[![Animated preview](render/preview.gif)](https://alevoldon.github.io/point-cloud-surface/interactive.html)
+[![Animated preview — click to open interactive 3D demo](render/preview.gif)](https://alevoldon.github.io/point-cloud-surface/interactive.html)
 
-Live preview: <https://alevoldon.github.io/point-cloud-surface/>  
-Interactive 3D: <https://alevoldon.github.io/point-cloud-surface/interactive.html>
+<div align="center">
 
-## What's Included
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-live-brightgreen?logo=github)](https://alevoldon.github.io/point-cloud-surface/)
+[![Interactive 3D](https://img.shields.io/badge/Interactive%203D-WebGL-blueviolet?logo=webgl)](https://alevoldon.github.io/point-cloud-surface/interactive.html)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Blender 5.x](https://img.shields.io/badge/Blender-5.x-orange?logo=blender)](https://www.blender.org/)
 
-- `make_point_cloud_blob.py` builds the scene from scratch with `bpy`
-- `point_cloud_blob.blend` is the generated Blender scene
-- `render/point_cloud_blob.png` is the preview render
-- `docs/index.html` is a browser-based animation preview (sampled PNG frames)
-- `docs/interactive.html` is a real-time WebGL preview built with Three.js
-- `FULL_PROCESS_GUIDE.md` explains the full build process
-- `BLENDER_UI_STEP_BY_STEP.md` explains how to recreate it manually in Blender UI
-- `PORTFOLIO_TEXTS.md` contains Russian and English project descriptions
+</div>
 
-## Requirements
+---
 
-- Blender 5.x
-- Windows PowerShell commands below assume Blender is installed at:
-  `C:\Program Files\Blender Foundation\Blender 5.0\blender.exe`
+## ✨ Previews
 
-## Generate The Scene
+| Animated preview (GIF) | Interactive WebGL demo |
+|:---:|:---:|
+| [![Animated preview](render/preview.gif)](render/preview.gif) | [![Interactive demo](render/point_cloud_blob.png)](https://alevoldon.github.io/point-cloud-surface/interactive.html) |
+| Rendered in Blender · Eevee Bloom | Three.js · GLSL shaders · OrbitControls |
 
-Create the `.blend` file and render a PNG:
+🔗 **[Open interactive 3D demo →](https://alevoldon.github.io/point-cloud-surface/interactive.html)**  
+🔗 **[Open animation preview →](https://alevoldon.github.io/point-cloud-surface/)**
+
+---
+
+## 🧠 How It Works
+
+A dense UV sphere serves as the base. **Geometry Nodes** displace its surface with two stacked 4D noise layers, converting the result to a point cloud where a tiny `Ico Sphere` is instanced on every vertex.
+
+| Step | Detail |
+|---|---|
+| Base mesh | 160 × 112 segment UV sphere |
+| Displacement | Two 4D noise layers (scale 1.45 and 3.2) summed with mapped amplitude |
+| Colour | Emissive blue → magenta gradient driven by world-space Z + noise variation |
+| Glow | Eevee Next Bloom (intensity 0.035, radius 4.8) |
+| Animation | Keyframed rotation, scale, and noise phase — seamless 72-frame loop |
+| Web preview | Three.js GLSL shaders + UnrealBloom reproduce the look in-browser |
+
+---
+
+## 🚀 Quick Start
+
+> **Requires:** Blender 5.x installed at the default path on Windows.
+
+### Generate scene + still render
 
 ```powershell
 & "C:\Program Files\Blender Foundation\Blender 5.0\blender.exe" `
-  -b `
-  --python ".\make_point_cloud_blob.py" `
+  -b --python ".\make_point_cloud_blob.py" `
   -- `
   --blend ".\point_cloud_blob.blend" `
   --render ".\render\point_cloud_blob.png"
 ```
 
-Create the `.blend`, still render, and animation frame sequence:
+### Generate scene + animation frames
 
 ```powershell
 & "C:\Program Files\Blender Foundation\Blender 5.0\blender.exe" `
-  -b `
-  --python ".\make_point_cloud_blob.py" `
+  -b --python ".\make_point_cloud_blob.py" `
   -- `
   --blend ".\point_cloud_blob.blend" `
   --render ".\render\point_cloud_blob.png" `
@@ -51,57 +69,65 @@ Create the `.blend`, still render, and animation frame sequence:
   --fps 24
 ```
 
-The full animation frame sequence is generated into `render/animation/` locally and is ignored by git to keep the repository lightweight.
+> Animation frames are written to `render/animation/` and ignored by git.
 
-Create only the `.blend` file:
+### Customise colours and noise
 
 ```powershell
 & "C:\Program Files\Blender Foundation\Blender 5.0\blender.exe" `
-  -b `
-  --python ".\make_point_cloud_blob.py" `
+  -b --python ".\make_point_cloud_blob.py" `
   -- `
-  --blend ".\point_cloud_blob.blend"
+  --color1 "#ff4400" `
+  --color2 "#ffee00" `
+  --noise-scale 2.0 `
+  --render ".\render\custom.png"
 ```
 
-## Project Structure
+| Argument | Default | Description |
+|---|---|---|
+| `--blend` | `point_cloud_blob.blend` | Output `.blend` path |
+| `--render` | `render/point_cloud_blob.png` | Output still-render path |
+| `--animate` | `render/animation/frame_` | Output animation frame prefix |
+| `--frames` | `96` | Number of animation frames |
+| `--fps` | `24` | Frames per second |
+| `--color1` | `#e666ff` | Gradient start colour (magenta end) |
+| `--color2` | `#38bdff` | Gradient end colour (blue end) |
+| `--noise-scale` | `1.0` | Displacement noise scale multiplier |
 
-```text
+---
+
+## 📁 Project Structure
+
+```
 .
-|- make_point_cloud_blob.py
-|- point_cloud_blob.blend
-|- render/
-|  \- point_cloud_blob.png
-|- docs/
-|  \- index.html
-|- FULL_PROCESS_GUIDE.md
-|- BLENDER_UI_STEP_BY_STEP.md
-\- PORTFOLIO_TEXTS.md
+├── make_point_cloud_blob.py   # bpy scene generator (main script)
+├── point_cloud_blob.blend     # generated Blender scene
+├── render/
+│   ├── point_cloud_blob.png   # still render
+│   └── preview.gif            # animated GIF (from Blender frames)
+├── docs/
+│   ├── index.html             # animation preview (sampled PNG frames)
+│   ├── interactive.html       # real-time WebGL demo (Three.js)
+│   └── assets/animation/      # sampled PNG frames for web preview
+├── FULL_PROCESS_GUIDE.md
+├── BLENDER_UI_STEP_BY_STEP.md
+└── PORTFOLIO_TEXTS.md
 ```
 
-## How It Works
+---
 
-- A dense UV sphere is used as the source surface.
-- Geometry Nodes displace the surface with layered noise.
-- The deformed mesh is converted to points.
-- A tiny `Ico Sphere` is instanced on each point.
-- An emissive material applies a blue-to-magenta gradient with slight color variation.
-- Eevee Bloom provides the glow.
-- A lightweight looping animation is created by keyframing rotation, scale, and noise phase.
+## 📚 Documentation
 
-## Sharing
+| Document | Description |
+|---|---|
+| [FULL_PROCESS_GUIDE.md](FULL_PROCESS_GUIDE.md) | Complete step-by-step build process |
+| [BLENDER_UI_STEP_BY_STEP.md](BLENDER_UI_STEP_BY_STEP.md) | How to recreate the scene manually in the Blender UI |
+| [PORTFOLIO_TEXTS.md](PORTFOLIO_TEXTS.md) | Ready-to-use portfolio descriptions (RU / EN) |
+| [GITHUB_SETUP.md](GITHUB_SETUP.md) | Notes on publishing this repo to GitHub Pages |
+| [RELEASE_NOTES_v1.2.0.md](RELEASE_NOTES_v1.2.0.md) | Latest release notes |
 
-This repo is ready to upload as-is to GitHub. The Blender backup file `*.blend1` is ignored.
+---
 
-GitHub publishing notes are available in `GITHUB_SETUP.md`.
+## 📜 License
 
-## Portfolio
-
-Ready-to-use portfolio descriptions are available in `PORTFOLIO_TEXTS.md`.
-
-## Release Notes
-
-Prepared release notes are available in `RELEASE_NOTES_v1.1.0.md`.
-
-## License
-
-MIT
+MIT — see [LICENSE](LICENSE).
