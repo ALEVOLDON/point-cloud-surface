@@ -8,8 +8,8 @@ __pycache__/
 *.blend1
 *.blend2
 *.tmp
+render/animation/
 
 # Local editor/system files
 .DS_Store
 Thumbs.db
-

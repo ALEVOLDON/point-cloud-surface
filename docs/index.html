@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Point Cloud Blob Preview</title>
+    <style>
+      :root {
+        --bg: #050505;
+        --panel: #111318;
+        --text: #eef4ff;
+        --muted: #9ca9bd;
+        --accent: #7dd9ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top, rgba(60, 120, 180, 0.18), transparent 35%),
+          radial-gradient(circle at bottom, rgba(232, 124, 255, 0.14), transparent 38%),
+          var(--bg);
+        display: grid;
+        place-items: center;
+        padding: 32px;
+      }
+
+      .shell {
+        width: min(980px, 100%);
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(2rem, 5vw, 3.8rem);
+        line-height: 0.95;
+      }
+
+      p {
+        margin: 0 0 24px;
+        color: var(--muted);
+        max-width: 60ch;
+      }
+
+      .player {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+        padding: 18px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        border-radius: 18px;
+        background: #000;
+      }
+
+      .meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      a {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <h1>Point Cloud Blob</h1>
+      <p>
+        Browser preview for the procedural Blender scene. The animation below is
+        driven by rendered PNG frames exported from Geometry Nodes + bpy.
+      </p>
+      <section class="player">
+        <img id="preview" src="./assets/animation/frame_0001.png" alt="Animated point cloud blob preview" />
+        <div class="meta">
+          <span>24 sampled frames, looped in-browser</span>
+          <a href="https://github.com/ALEVOLDON/point-cloud-surface">GitHub repository</a>
+        </div>
+      </section>
+    </main>
+    <script>
+      const frames = [
+        "frame_0001.png","frame_0004.png","frame_0007.png","frame_0010.png",
+        "frame_0013.png","frame_0016.png","frame_0019.png","frame_0022.png",
+        "frame_0025.png","frame_0028.png","frame_0031.png","frame_0034.png",
+        "frame_0037.png","frame_0040.png","frame_0043.png","frame_0046.png",
+        "frame_0049.png","frame_0052.png","frame_0055.png","frame_0058.png",
+        "frame_0061.png","frame_0064.png","frame_0067.png","frame_0070.png"
+      ].map((name) => `./assets/animation/${name}`);
+
+      const preview = document.getElementById("preview");
+      let index = 0;
+      const preload = frames.map((src) => {
+        const img = new Image();
+        img.src = src;
+        return img;
+      });
+
+      setInterval(() => {
+        index = (index + 1) % frames.length;
+        preview.src = preload[index].src;
+      }, 90);
+    </script>
+  </body>
+  </html>

@@ -56,6 +56,18 @@ Includes:
 - Manual Blender UI step-by-step guide
 ```
 
+## GitHub Pages
+
+If you want a hosted browser preview:
+
+1. Open repository `Settings`
+2. Open `Pages`
+3. Set source to `Deploy from a branch`
+4. Select branch `main`
+5. Select folder `/docs`
+
+Then GitHub will publish `docs/index.html` as a lightweight animated preview page.
+
 ## Optional GitHub CLI Flow
 
 Если установлен `gh`, можно использовать такой порядок:
@@ -70,4 +82,3 @@ gh repo create point-cloud-blob-blender --public --source . --remote origin --pu
 git remote add origin https://github.com/YOUR_USERNAME/point-cloud-blob-blender.git
 git push -u origin main
 ```
-

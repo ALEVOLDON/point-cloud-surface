@@ -7,37 +7,49 @@ import bpy
 
 def parse_args():
     argv = sys.argv
+    defaults = {
+        "blend_path": os.path.abspath("point_cloud_blob.blend"),
+        "render_path": os.path.abspath("render\\point_cloud_blob.png"),
+        "animation_path": os.path.abspath("render\\animation\\frame_"),
+        "render": False,
+        "animate": False,
+        "frames": 96,
+        "fps": 24,
+    }
     if "--" not in argv:
-        return {
-            "blend_path": os.path.abspath("point_cloud_blob.blend"),
-            "render_path": os.path.abspath("render\\point_cloud_blob.png"),
-            "render": False,
-        }
+        return defaults
 
     user_args = argv[argv.index("--") + 1 :]
-    blend_path = os.path.abspath("point_cloud_blob.blend")
-    render_path = os.path.abspath("render\\point_cloud_blob.png")
-    render = False
+    args = defaults.copy()
 
     i = 0
     while i < len(user_args):
         arg = user_args[i]
         if arg == "--blend" and i + 1 < len(user_args):
-            blend_path = os.path.abspath(user_args[i + 1])
+            args["blend_path"] = os.path.abspath(user_args[i + 1])
             i += 2
             continue
         if arg == "--render" and i + 1 < len(user_args):
-            render_path = os.path.abspath(user_args[i + 1])
-            render = True
+            args["render_path"] = os.path.abspath(user_args[i + 1])
+            args["render"] = True
+            i += 2
+            continue
+        if arg == "--animate" and i + 1 < len(user_args):
+            args["animation_path"] = os.path.abspath(user_args[i + 1])
+            args["animate"] = True
+            i += 2
+            continue
+        if arg == "--frames" and i + 1 < len(user_args):
+            args["frames"] = int(user_args[i + 1])
+            i += 2
+            continue
+        if arg == "--fps" and i + 1 < len(user_args):
+            args["fps"] = int(user_args[i + 1])
             i += 2
             continue
         i += 1
 
-    return {
-        "blend_path": blend_path,
-        "render_path": render_path,
-        "render": render,
-    }
+    return args
 
 
 def reset_scene():
@@ -51,7 +63,7 @@ def reset_scene():
     return scene
 
 
-def configure_render(scene):
+def configure_render(scene, fps):
     try:
         scene.render.engine = "BLENDER_EEVEE_NEXT"
     except TypeError:
@@ -65,19 +77,21 @@ def configure_render(scene):
     scene.render.image_settings.color_mode = "RGBA"
     scene.view_settings.view_transform = "Standard"
     scene.view_settings.look = "None"
-    scene.view_settings.exposure = -1.2
+    scene.view_settings.exposure = -1.0
+    scene.frame_start = 1
+    scene.render.fps = fps
 
     if hasattr(scene, "eevee"):
         scene.eevee.taa_render_samples = 128
         if hasattr(scene.eevee, "use_bloom"):
             scene.eevee.use_bloom = True
-            scene.eevee.bloom_intensity = 0.03
-            scene.eevee.bloom_radius = 4.5
-            scene.eevee.bloom_threshold = 0.6
+            scene.eevee.bloom_intensity = 0.035
+            scene.eevee.bloom_radius = 4.8
+            scene.eevee.bloom_threshold = 0.55
 
 
 def create_dot_instance():
-    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=0.012, location=(0, 0, 0))
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=0.0105, location=(0, 0, 0))
     dot = bpy.context.active_object
     dot.name = "DotInstance"
     dot.hide_render = False
@@ -87,9 +101,9 @@ def create_dot_instance():
 
 def create_blob_source():
     bpy.ops.mesh.primitive_uv_sphere_add(
-        segments=132,
-        ring_count=96,
-        radius=1.18,
+        segments=160,
+        ring_count=112,
+        radius=1.15,
         location=(0, 0, 0),
     )
     source = bpy.context.active_object
@@ -118,36 +132,36 @@ def build_emission_material():
 
     geometry.location = (-900, 0)
     separate.location = (-700, 0)
-    map_range.location = (-500, 0)
+    map_range.location = (-520, 0)
     noise.location = (-700, -220)
     math_noise.location = (-500, -220)
     add.location = (-260, -40)
     ramp.location = (-40, 0)
     emission.location = (180, 0)
     output.location = (420, 0)
-    value.location = (-260, -260)
+    value.location = (180, -180)
 
-    map_range.inputs["From Min"].default_value = -1.4
-    map_range.inputs["From Max"].default_value = 1.4
+    map_range.inputs["From Min"].default_value = -1.2
+    map_range.inputs["From Max"].default_value = 1.2
     map_range.inputs["To Min"].default_value = 0.0
     map_range.inputs["To Max"].default_value = 1.0
     map_range.clamp = True
 
-    noise.inputs["Scale"].default_value = 1.8
-    noise.inputs["Detail"].default_value = 5.4
-    noise.inputs["Roughness"].default_value = 0.45
+    noise.inputs["Scale"].default_value = 2.1
+    noise.inputs["Detail"].default_value = 5.0
+    noise.inputs["Roughness"].default_value = 0.38
 
     math_noise.operation = "MULTIPLY"
-    math_noise.inputs[1].default_value = 0.12
+    math_noise.inputs[1].default_value = 0.07
     add.operation = "ADD"
     add.use_clamp = True
 
-    ramp.color_ramp.elements[0].position = 0.12
-    ramp.color_ramp.elements[0].color = (0.9, 0.28, 1.0, 1.0)
-    ramp.color_ramp.elements[1].position = 0.9
-    ramp.color_ramp.elements[1].color = (0.16, 0.58, 1.0, 1.0)
+    ramp.color_ramp.elements[0].position = 0.08
+    ramp.color_ramp.elements[0].color = (0.90, 0.40, 1.0, 1.0)
+    ramp.color_ramp.elements[1].position = 0.92
+    ramp.color_ramp.elements[1].color = (0.22, 0.74, 1.0, 1.0)
 
-    value.outputs[0].default_value = 2.8
+    value.outputs[0].default_value = 2.3
 
     links.new(geometry.outputs["Position"], separate.inputs["Vector"])
     links.new(separate.outputs["Z"], map_range.inputs["Value"])
@@ -216,40 +230,39 @@ def build_geometry_nodes(source, dot, material):
 
     scale_a.operation = "SCALE"
     scale_b.operation = "SCALE"
-    scale_a.inputs[3].default_value = 1.65
-    scale_b.inputs[3].default_value = 3.6
+    scale_a.inputs[3].default_value = 1.45
+    scale_b.inputs[3].default_value = 3.2
 
     noise_a.noise_dimensions = "4D"
     noise_a.inputs["Scale"].default_value = 1.0
-    noise_a.inputs["Detail"].default_value = 7.0
-    noise_a.inputs["Roughness"].default_value = 0.42
-    noise_a.inputs["W"].default_value = 0.18
+    noise_a.inputs["Detail"].default_value = 8.0
+    noise_a.inputs["Roughness"].default_value = 0.4
+    noise_a.inputs["W"].default_value = 0.0
 
     noise_b.noise_dimensions = "4D"
     noise_b.inputs["Scale"].default_value = 1.0
     noise_b.inputs["Detail"].default_value = 3.0
-    noise_b.inputs["Roughness"].default_value = 0.55
-    noise_b.inputs["W"].default_value = 4.7
+    noise_b.inputs["Roughness"].default_value = 0.54
+    noise_b.inputs["W"].default_value = 3.8
 
     math_a.operation = "MULTIPLY"
-    math_a.inputs[1].default_value = 0.42
+    math_a.inputs[1].default_value = 0.34
     math_b.operation = "MULTIPLY"
-    math_b.inputs[1].default_value = 0.16
+    math_b.inputs[1].default_value = 0.13
     add.operation = "ADD"
 
     map_range.inputs["From Min"].default_value = 0.0
-    map_range.inputs["From Max"].default_value = 0.58
-    map_range.inputs["To Min"].default_value = -0.24
-    map_range.inputs["To Max"].default_value = 0.36
+    map_range.inputs["From Max"].default_value = 0.52
+    map_range.inputs["To Min"].default_value = -0.16
+    map_range.inputs["To Max"].default_value = 0.29
     map_range.clamp = False
 
     multiply.operation = "SCALE"
     mesh_to_points.mode = "VERTICES"
-    mesh_to_points.inputs["Radius"].default_value = 0.018
+    mesh_to_points.inputs["Radius"].default_value = 0.017
 
     object_info.transform_space = "RELATIVE"
     object_info.inputs["Object"].default_value = dot
-
     set_material.inputs["Material"].default_value = material
 
     links.new(group_input.outputs["Geometry"], set_position.inputs["Geometry"])
@@ -272,20 +285,26 @@ def build_geometry_nodes(source, dot, material):
     links.new(realize.outputs["Geometry"], set_material.inputs["Geometry"])
     links.new(set_material.outputs["Geometry"], group_output.inputs["Geometry"])
 
+    return {
+        "noise_a": noise_a,
+        "noise_b": noise_b,
+        "amplitude": map_range,
+    }
+
 
 def create_camera():
-    bpy.ops.object.camera_add(location=(0.0, -6.4, 0.9), rotation=(math.radians(82), 0.0, 0.0))
+    bpy.ops.object.camera_add(location=(0.0, -6.8, 0.7), rotation=(math.radians(82), 0.0, 0.0))
     camera = bpy.context.active_object
     camera.name = "Camera"
-    camera.data.lens = 62
+    camera.data.lens = 68
     camera.data.dof.use_dof = True
-    camera.data.dof.focus_distance = 6.1
-    camera.data.dof.aperture_fstop = 2.8
+    camera.data.dof.focus_distance = 6.45
+    camera.data.dof.aperture_fstop = 2.2
 
     bpy.ops.object.empty_add(type="PLAIN_AXES", location=(0.0, 0.0, 0.0))
     target = bpy.context.active_object
     target.name = "CameraTarget"
-    target.location = (0.0, 0.0, 0.08)
+    target.location = (0.0, 0.0, 0.06)
 
     constraint = camera.constraints.new(type="TRACK_TO")
     constraint.target = target
@@ -293,32 +312,56 @@ def create_camera():
     constraint.up_axis = "UP_Y"
 
     bpy.context.scene.camera = camera
-    return camera
-
-
-def create_rim_lights():
-    bpy.ops.object.light_add(type="AREA", location=(1.8, -1.4, 1.5))
-    key = bpy.context.active_object
-    key.data.energy = 3000
-    key.data.shape = "DISK"
-    key.data.size = 3.2
-    key.data.color = (0.62, 0.83, 1.0)
-
-    bpy.ops.object.light_add(type="AREA", location=(-1.8, 1.2, -1.3))
-    fill = bpy.context.active_object
-    fill.data.energy = 1800
-    fill.data.shape = "DISK"
-    fill.data.size = 3.8
-    fill.data.color = (0.84, 0.58, 1.0)
+    return camera, target
 
 
 def pose_blob(source):
     source.rotation_euler = (
-        math.radians(18),
-        math.radians(-14),
-        math.radians(22),
+        math.radians(16),
+        math.radians(-18),
+        math.radians(24),
     )
-    source.scale = (1.08, 1.0, 1.04)
+    source.scale = (1.12, 0.98, 1.06)
+
+
+def add_animation(source, target, nodes_info, scene, frame_end):
+    scene.frame_end = frame_end
+    base_rot_z = source.rotation_euler.z
+    base_rot_x = source.rotation_euler.x
+
+    noise_a_w = nodes_info["noise_a"].inputs["W"]
+    noise_b_w = nodes_info["noise_b"].inputs["W"]
+    amp_min = nodes_info["amplitude"].inputs["To Min"]
+    amp_max = nodes_info["amplitude"].inputs["To Max"]
+
+    for frame, progress in ((1, 0.0), (frame_end // 2, 0.5), (frame_end, 1.0)):
+        angle = progress * math.tau
+        source.rotation_euler.z = base_rot_z + math.radians(14.0) * math.sin(angle)
+        source.rotation_euler.x = base_rot_x + math.radians(5.0) * math.cos(angle)
+        source.scale = (
+            1.12 + 0.03 * math.sin(angle),
+            0.98 + 0.02 * math.cos(angle * 2.0),
+            1.06 + 0.025 * math.cos(angle),
+        )
+        target.location.z = 0.06 + 0.05 * math.sin(angle)
+
+        noise_a_w.default_value = progress * 1.4
+        noise_b_w.default_value = 3.8 + progress * 2.2
+        amp_min.default_value = -0.16 - 0.02 * math.sin(angle)
+        amp_max.default_value = 0.29 + 0.035 * math.cos(angle)
+
+        source.keyframe_insert(data_path="rotation_euler", frame=frame)
+        source.keyframe_insert(data_path="scale", frame=frame)
+        target.keyframe_insert(data_path="location", frame=frame)
+        noise_a_w.keyframe_insert(data_path="default_value", frame=frame)
+        noise_b_w.keyframe_insert(data_path="default_value", frame=frame)
+        amp_min.keyframe_insert(data_path="default_value", frame=frame)
+        amp_max.keyframe_insert(data_path="default_value", frame=frame)
+
+def configure_animation_output(scene, output_path):
+    scene.render.image_settings.file_format = "PNG"
+    scene.render.image_settings.color_mode = "RGBA"
+    scene.render.filepath = output_path
 
 
 def ensure_parent_dir(path):
@@ -330,21 +373,31 @@ def ensure_parent_dir(path):
 def main():
     args = parse_args()
     scene = reset_scene()
-    configure_render(scene)
+    configure_render(scene, args["fps"])
 
     dot = create_dot_instance()
     source = create_blob_source()
     material = build_emission_material()
-    build_geometry_nodes(source, dot, material)
+    nodes_info = build_geometry_nodes(source, dot, material)
     pose_blob(source)
-    create_camera()
+    camera, target = create_camera()
+
+    if args["animate"]:
+        add_animation(source, target, nodes_info, scene, args["frames"])
+
     ensure_parent_dir(args["blend_path"])
     bpy.ops.wm.save_as_mainfile(filepath=args["blend_path"])
 
     if args["render"]:
         ensure_parent_dir(args["render_path"])
+        scene.render.image_settings.file_format = "PNG"
         scene.render.filepath = args["render_path"]
         bpy.ops.render.render(write_still=True)
+
+    if args["animate"]:
+        ensure_parent_dir(args["animation_path"])
+        configure_animation_output(scene, args["animation_path"])
+        bpy.ops.render.render(animation=True)
 
 
 if __name__ == "__main__":
