@@ -1,8 +1,8 @@
 # Point Cloud Blob
 
-> Procedural glowing point-cloud blob generated entirely with Python (`bpy`) and Blender 5 Geometry Nodes.
+> Procedural glowing point-cloud blob generated entirely with Python (`bpy`) and Blender 5 Geometry Nodes — with a real-time interactive WebGL audio experience.
 
-[![Animated preview — click to open interactive 3D demo](render/preview.gif)](https://alevoldon.github.io/point-cloud-surface/interactive.html)
+[![Animated preview — click to open interactive demo](render/preview.gif)](https://alevoldon.github.io/point-cloud-surface/interactive.html)
 
 <div align="center">
 
@@ -17,19 +17,45 @@
 
 ## ✨ Previews
 
-| Animated preview (GIF) | Interactive WebGL demo |
+| Animated preview (GIF) | Interactive WebGL + Audio |
 |:---:|:---:|
 | [![Animated preview](render/preview.gif)](render/preview.gif) | [![Interactive demo](render/point_cloud_blob.png)](https://alevoldon.github.io/point-cloud-surface/interactive.html) |
-| Rendered in Blender · Eevee Bloom | Three.js · GLSL shaders · OrbitControls |
+| Rendered in Blender · Eevee Bloom | Three.js · GLSL shaders · Web Audio API |
 
-🔗 **[Open interactive 3D demo →](https://alevoldon.github.io/point-cloud-surface/interactive.html)**  
+🔗 **[Open interactive experience →](https://alevoldon.github.io/point-cloud-surface/interactive.html)**  
 🔗 **[Open animation preview →](https://alevoldon.github.io/point-cloud-surface/)**
 
 ---
 
-## 🧠 How It Works
+## 🎛️ Interactive Experience
 
-A dense UV sphere serves as the base. **Geometry Nodes** displace its surface with two stacked 4D noise layers, converting the result to a point cloud where a tiny `Ico Sphere` is instanced on every vertex.
+The browser experience at `docs/interactive.html` is a fully interactive audiovisual tool:
+
+### 🎵 Audio
+| Feature | Detail |
+|---|---|
+| Background tracks | *Digital Bloom 1* and *Digital Bloom 2* cycle automatically |
+| Crossfade | 2.5 s smooth crossfade between tracks |
+| Controls | Play / Pause, Previous / Next, seekable progress bar, volume |
+| Visualiser | 18-bar real-time FFT spectrum |
+
+### 🧠 Audio Reactivity
+Enable **♪ Sync** mode — the blob displacement amplitude is driven by bass frequencies in real-time. The blob breathes and pulses in sync with the music.
+
+### 🎨 Visual Controls (right panel)
+| Control | Description |
+|---|---|
+| Color A / Color B | Live gradient colour pickers (GLSL uniforms) |
+| Noise Scale | Blob shape from smooth to spiky |
+| Animation Speed | Deformation speed multiplier |
+| Point Size | Particle radius |
+| Bloom Intensity | Glow strength |
+| Bloom Radius | Glow spread |
+| 📷 Save | Download current frame as PNG |
+
+---
+
+## 🧠 How It Works
 
 | Step | Detail |
 |---|---|
@@ -38,7 +64,7 @@ A dense UV sphere serves as the base. **Geometry Nodes** displace its surface wi
 | Colour | Emissive blue → magenta gradient driven by world-space Z + noise variation |
 | Glow | Eevee Next Bloom (intensity 0.035, radius 4.8) |
 | Animation | Keyframed rotation, scale, and noise phase — seamless 72-frame loop |
-| Web preview | Three.js GLSL shaders + UnrealBloom reproduce the look in-browser |
+| Web preview | Three.js GLSL shaders + UnrealBloom + Web Audio API FFT |
 
 ---
 
@@ -100,15 +126,17 @@ A dense UV sphere serves as the base. **Geometry Nodes** displace its surface wi
 
 ```
 .
-├── make_point_cloud_blob.py   # bpy scene generator (main script)
-├── point_cloud_blob.blend     # generated Blender scene
+├── make_point_cloud_blob.py      # bpy scene generator (main script)
+├── point_cloud_blob.blend        # generated Blender scene
 ├── render/
-│   ├── point_cloud_blob.png   # still render
-│   └── preview.gif            # animated GIF (from Blender frames)
+│   ├── point_cloud_blob.png      # still render
+│   └── preview.gif               # animated GIF (from Blender frames)
 ├── docs/
-│   ├── index.html             # animation preview (sampled PNG frames)
-│   ├── interactive.html       # real-time WebGL demo (Three.js)
-│   └── assets/animation/      # sampled PNG frames for web preview
+│   ├── index.html                # animation preview (sampled PNG frames)
+│   ├── interactive.html          # real-time WebGL + audio experience
+│   └── assets/
+│       ├── animation/            # sampled PNG frames for web preview
+│       └── audio/                # background music tracks
 ├── FULL_PROCESS_GUIDE.md
 ├── BLENDER_UI_STEP_BY_STEP.md
 └── PORTFOLIO_TEXTS.md
@@ -121,10 +149,10 @@ A dense UV sphere serves as the base. **Geometry Nodes** displace its surface wi
 | Document | Description |
 |---|---|
 | [FULL_PROCESS_GUIDE.md](FULL_PROCESS_GUIDE.md) | Complete step-by-step build process |
-| [BLENDER_UI_STEP_BY_STEP.md](BLENDER_UI_STEP_BY_STEP.md) | How to recreate the scene manually in the Blender UI |
+| [BLENDER_UI_STEP_BY_STEP.md](BLENDER_UI_STEP_BY_STEP.md) | Recreate the scene manually in Blender UI |
 | [PORTFOLIO_TEXTS.md](PORTFOLIO_TEXTS.md) | Ready-to-use portfolio descriptions (RU / EN) |
-| [GITHUB_SETUP.md](GITHUB_SETUP.md) | Notes on publishing this repo to GitHub Pages |
-| [RELEASE_NOTES_v1.2.0.md](RELEASE_NOTES_v1.2.0.md) | Latest release notes |
+| [GITHUB_SETUP.md](GITHUB_SETUP.md) | Notes on publishing to GitHub Pages |
+| [RELEASE_NOTES_v1.3.0.md](RELEASE_NOTES_v1.3.0.md) | Latest release notes |
 
 ---
 
