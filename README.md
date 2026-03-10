@@ -4,6 +4,8 @@ Procedural Blender scene that generates a glowing point-cloud blob inspired by t
 
 ![Preview](render/point_cloud_blob.png)
 
+Live preview: <https://alevoldon.github.io/point-cloud-surface/>
+
 ## What's Included
 
 - `make_point_cloud_blob.py` builds the scene from scratch with `bpy`
@@ -89,8 +91,6 @@ Create only the `.blend` file:
 This repo is ready to upload as-is to GitHub. The Blender backup file `*.blend1` is ignored.
 
 GitHub publishing notes are available in `GITHUB_SETUP.md`.
-
-If you enable GitHub Pages from the `docs/` folder, the browser preview becomes a simple hosted animation page.
 
 ## Portfolio
 
