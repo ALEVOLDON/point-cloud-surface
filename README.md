@@ -96,6 +96,10 @@ If you enable GitHub Pages from the `docs/` folder, the browser preview becomes 
 
 Ready-to-use portfolio descriptions are available in `PORTFOLIO_TEXTS.md`.
 
+## Release Notes
+
+Prepared release notes are available in `RELEASE_NOTES_v1.1.0.md`.
+
 ## License
 
 MIT

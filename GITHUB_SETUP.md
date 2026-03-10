@@ -68,6 +68,14 @@ If you want a hosted browser preview:
 
 Then GitHub will publish `docs/index.html` as a lightweight animated preview page.
 
+## GitHub Actions
+
+This repository includes:
+
+- `.github/workflows/deploy-pages.yml`
+
+It deploys the `docs/` folder to GitHub Pages automatically on every push to `main` when files inside `docs/` change.
+
 ## Optional GitHub CLI Flow
 
 Если установлен `gh`, можно использовать такой порядок:
