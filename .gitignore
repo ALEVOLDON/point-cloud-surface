@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Blender backups and temp files
+*.blend1
+*.blend2
+*.tmp
+
+# Local editor/system files
+.DS_Store
+Thumbs.db
+
