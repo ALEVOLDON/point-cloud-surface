@@ -8,6 +8,7 @@
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-live-brightgreen?logo=github)](https://alevoldon.github.io/point-cloud-surface/)
 [![Interactive 3D](https://img.shields.io/badge/Interactive%203D-WebGL-blueviolet?logo=webgl)](https://alevoldon.github.io/point-cloud-surface/interactive.html)
+[![Mobile](https://img.shields.io/badge/Mobile-Responsive-success?logo=apple)](https://alevoldon.github.io/point-cloud-surface/interactive.html)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Blender 5.x](https://img.shields.io/badge/Blender-5.x-orange?logo=blender)](https://www.blender.org/)
 
@@ -29,7 +30,14 @@
 
 ## 🎛️ Interactive Experience
 
-The browser experience at `docs/interactive.html` is a fully interactive audiovisual tool:
+The browser experience at `docs/interactive.html` is a fully interactive audiovisual tool — works on **desktop and mobile**.
+
+### 📱 Mobile Layout
+On screens narrower than 640 px:
+- The blob fills the full screen — no overlapping panels
+- A floating **⚙** button (bottom-right) slides up a **bottom sheet** with all controls
+- Tap the blob to dismiss the panel
+- Audio strip is compact and pinned to the bottom
 
 ### 🎵 Audio
 | Feature | Detail |
@@ -42,7 +50,7 @@ The browser experience at `docs/interactive.html` is a fully interactive audiovi
 ### 🧠 Audio Reactivity
 Enable **♪ Sync** mode — the blob displacement amplitude is driven by bass frequencies in real-time. The blob breathes and pulses in sync with the music.
 
-### 🎨 Visual Controls (right panel)
+### 🎨 Visual Controls (right panel / bottom sheet on mobile)
 | Control | Description |
 |---|---|
 | Color A / Color B | Live gradient colour pickers (GLSL uniforms) |
@@ -152,7 +160,7 @@ Enable **♪ Sync** mode — the blob displacement amplitude is driven by bass f
 | [BLENDER_UI_STEP_BY_STEP.md](BLENDER_UI_STEP_BY_STEP.md) | Recreate the scene manually in Blender UI |
 | [PORTFOLIO_TEXTS.md](PORTFOLIO_TEXTS.md) | Ready-to-use portfolio descriptions (RU / EN) |
 | [GITHUB_SETUP.md](GITHUB_SETUP.md) | Notes on publishing to GitHub Pages |
-| [RELEASE_NOTES_v1.3.0.md](RELEASE_NOTES_v1.3.0.md) | Latest release notes |
+| [RELEASE_NOTES_v1.4.0.md](RELEASE_NOTES_v1.4.0.md) | Latest release notes |
 
 ---
 
